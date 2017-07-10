@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+	xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+<title>管理中心</title>
+<link rel="icon" type="image/png"
+	th:href="@{/js/bootstrap/assets/i/favicon.png}" />
+<link rel="stylesheet"
+	th:href="@{/js/bootstrap/assets/css/bootstrap.css}" />
+<link rel="stylesheet"
+	th:href="@{/js/bootstrap/assets/css/font-awesome.css}" />
+<link rel="stylesheet" th:href="@{/css/zTreeStyle/zTreeStyle.css}"
+	type="text/css" />
+<link rel="stylesheet" th:href="@{/js/bootstrap/assets/css/chosen.css}" />
+<link rel="stylesheet"
+	th:href="@{/js/bootstrap/assets/css/bootstrap-editable.css}" />
+<link rel="stylesheet" th:href="@{/js/bootstrap/assets/css/select2.css}" />
+<link rel="stylesheet"
+	th:href="@{/js/bootstrap/assets/css/colorbox.css}" />
+
+<link rel="stylesheet"
+	th:href="@{/js/bootstrap/assets/css/jquery-ui.css}" />
+<link rel="stylesheet"
+	th:href="@{/js/bootstrap/assets/css/jquery-ui.custom.css}" />
+<link rel="stylesheet"
+	th:href="@{/js/bootstrap/assets/css/ui.jqgrid.css}" />
+
+<link rel="stylesheet" th:href="@{/js/bootstrap/assets/css/ace.css}" />
+<link rel="stylesheet"
+	th:href="@{/js/bootstrap/assets/css/ace-fonts.css}" />
+<link rel="stylesheet" th:href="@{/css/index.css}" />
+
+
+<!--[if !IE]> -->
+<script th:src="@{/js/bootstrap/assets/js/jquery.js}"></script>
+<!-- <![endif]-->
+
+<!--[if IE]>
+<script type="text/javascript">
+ <script th:src="@{/js/bootstrap/assets/js/jquery1x.js}" />
+</script>
+<![endif]-->
+<!-- 兼容高版本jquery下过时的api -->
+<script type="text/javascript">
+	jQuery.browser = {};
+	(function() {
+		jQuery.browser.msie = false;
+		jQuery.browser.version = 0;
+		if (navigator.userAgent.match(/MSIE ([0-9]+)./)) {
+			jQuery.browser.msie = true;
+			jQuery.browser.version = RegExp.$1;
+		}
+	})();
+	var token = $("meta[name='_csrf']").attr("content");
+	var header = $("meta[name='_csrf_header']").attr("content");
+
+	$(document).ajaxSend(function(e, xhr, options) {
+		xhr.setRequestHeader(header, token);
+	});
+</script>
+<script th:src="@{/js/bootstrap/assets/js/bootstrap.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/jquery.dataTables.js}"></script>
+<script
+	th:src="@{/js/bootstrap/assets/js/jquery.dataTables.bootstrap.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/jqGrid/jquery.jqGrid.src.js}"></script>
+<script
+	th:src="@{/js/bootstrap/assets/js/jqGrid/i18n/grid.locale-cn.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/jquery-ui.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/jquery-ui.custom.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/jquery.ui.touch-punch.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/ace/elements.fileinput.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/bootbox.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/ace/ace.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/ace/ace.touch-drag.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/ace/ace.sidebar.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/ace/ace.sidebar-scroll-1.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/ace/ace.submenu-hover.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/ace/ace.settings-skin.js}"></script>
+
+<script th:src="@{/js/bootstrap/assets/js/jquery.form.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/jquery.validate.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/additional-methods.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/chosen.jquery.js}"></script>
+<script
+	th:src="@{/js/bootstrap/assets/js/x-editable/bootstrap-editable.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/x-editable/ace-editable.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/jquery.colorbox.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/select2.js}"></script>
+<script th:src="@{/js/common/jquery.ztree.core-3.5.js}"></script>
+<script th:src="@{/js/common/jquery.ztree.excheck-3.5.js}"></script>
+<script th:src="@{/js/common/jsrender.js}"></script>
+<script th:src="@{/js/common/mask.js}"></script>
+<script th:src="@{/js/common/global.js}"></script>
+<script th:src="@{/js/common/home.js}"></script>
+<script th:src="@{/js/common/Highcharts-4.2.3/js/highcharts.js}"></script>
+</head>
+<body class="no-skin">
+	<div th:include="header :: header"></div>
+
+	<div class="main-container" id="main-container">
+		<div id="sidebar" class="sidebar responsive" th:include="menu :: menu"></div>
+
+		<div class="main-content" id="rightDivContent">
+			<iframe name="mainFrame" id="mainFrame" frameborder="0" src="/tab"
+				style="margin: 0 auto; width: 100%;"></iframe>
+		</div>
+	</div>
+
+	<div id="dialog-confirm" class="hide">
+
+		<div class="space-6"></div>
+
+		<p class="bigger-110 bolder center grey">
+			<i class="ace-icon fa fa-hand-o-right blue bigger-120"></i> <span
+				id="confirm_content">确定要删除该条数据吗?</span>
+		</p>
+	</div>
+	<!-- #dialog-confirm -->
+
+	<div class="globalViewPic" id="globalViewPic">
+		<div id="cboxOverlay"
+			style="opacity: 0.9; cursor: pointer; display: none;"></div>
+		<div id="colorbox" class="viewPic" role="dialog" tabindex="-1"
+			style="display: none; top: 100px; left: 670px; position: absolute; width: 580px; height: 608px;">
+			<div id="cboxWrapper" style="height: 608px; width: 580px;">
+				<div>
+					<div id="cboxTopLeft" style="float: left;"></div>
+				</div>
+				<div style="clear: left;">
+					<div id="cboxContent"
+						style="float: left; width: 500px; height: 528px;">
+						<div id="cboxLoadedContent"
+							style="width: 500px; overflow: hidden; height: 500px;">
+							<img class="cboxPhoto" id="photos" src=""
+								style="cursor: pointer; width: 500px; height: 500px; float: none;" />
+						</div>
+						<button type="button" id="cboxClose">×</button>
+					</div>
+				</div>
+
+			</div>
+
+		</div>
+	</div>
+
+	<div id="passwordDialogDiv"></div>
+	<div id="passwordDialog" class="hide">
+		<form class="form-horizontal" id="passwordForm" method="post"
+			onsubmit="return false;" th:action="@{/user/update/password}"
+			action="#">
+			<input type="hidden" id="id" name="id" value="" /> <input
+				type="hidden" id="roles" name="roles" value="1" />
+			<div class="form-group">
+				<label class="control-label col-xs-12 col-sm-2 no-padding-right"
+					for="comment"><span style="color: red">*</span>新密码：</label>
+				<div class="col-xs-12 col-sm-9">
+					<div class="clearfix">
+						<input type="password" id="myPassword" name="password"
+							placeholder="建议使用6-16个字符的字母、数字" class="col-xs-10" maxlength="16" />
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="control-label col-xs-12 col-sm-2 no-padding-right"
+					for="comment"><span style="color: red">*</span>确认密码：</label>
+				<div class="col-xs-12 col-sm-9">
+					<div class="clearfix">
+						<input type="password" id="myRepeatPassword" name="repeatPassword"
+							placeholder="建议使用6-16个字符的字母、数字" class="col-xs-10" maxlength="16" />
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+
+	<div id="messageDialogDiv"></div>
+	<div id="messageDialog" class="hide">
+		<form class="form-horizontal" id="messageForm" method="post"
+			onsubmit="return false;" th:action="@{/}">
+			<div>
+
+				<div class="float-left width200">
+					<div class="widget-box transparent">
+						<div class="widget-header widget-header-small">
+							<h4 class="widget-title blue smaller">
+								<i class="ace-icon fa fa-rss orange"></i> 系统用户列表
+							</h4>
+							<div class="widget-toolbar action-buttons">
+								<a href="#" data-action="reload"> <i
+									class="ace-icon fa fa-refresh blue"></i></a>
+							</div>
+						</div>
+
+						<div class="widget-body">
+							<div class="widget-main padding-8">
+							    
+								<div class="scroll-content overFlow height-500" id="posts-content">
+								<input type="text" class="width100" id="searchKeyword" style="padding: 5px 4px 6px;" autocomplete="off"/>
+								<button class="btn btn-sm" onclick="searchUsers();"><i class="glyphicon glyphicon-search"></i> 搜索</button>
+									<div id="systemUsers"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="float-left width450">
+					<div class="widget-box">
+						<div class="widget-header widget-header-flat">
+							<h4 class="widget-title" id="currentUser"></h4>
+						</div>
+						<div class="widget-body">
+							<div class="widget-main">
+								<div class="height-280 overFlow" id="messageList">
+								<div id="messageListDiv">
+									<div class="profile-activity clearfix">
+										<div>
+											<img class="pull-left" alt="Alex Doe's avatar"
+												src="/js/bootstrap/assets/avatars/avatar5.png" /> <a
+												class="user" href="#"> Alex Doe </a> Hello , every body;
+											<div class="time">
+												<i class="ace-icon fa fa-clock-o bigger-110"></i>an hour ago
+											</div>
+										</div>
+									</div>
+									<div class="profile-activity clearfix">
+										<div class="left-per-40">
+											<img class="pull-left" alt="Alex Doe's avatar"
+												src="/js/bootstrap/assets/avatars/avatar4.png" /> <a
+												class="user" href="#"> dexia Doe </a> ni hao ya  你现在在哪里啊，我导出找你哦
+										</div>
+									</div>
+									
+									</div>
+									
+								</div>
+								<hr />
+								<textarea class="width-100" rows="7" cols="30" id="msgContent"></textarea>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+
+	<script type="text/javascript">
+		$(function() {
+			$('#sidebar').find('ul li a').click(function() {
+				if ($(this).attr("class") != "dropdown-toggle") {
+					$(".nav-list li.active").removeClass("active");
+					$("li .active").removeClass("active");
+					$(this).parent().addClass("active");
+					var title = $(this).find("span").html();
+					var role = $(this).attr("class");
+					if (!isnull(role)) {
+						var id = role.replace("/", "_");
+						siMenu(id, title, '/' + role);
+					}
+				}
+			});
+
+			var hh = window.innerHeight - 50;
+			$("#mainFrame").css("height", hh + 'px');
+			var imageUrlPrefix = $("#imageUrlPrefix").val();
+			var staticUrlPrefix = $("#staticUrlPrefix").val();
+			var globalViewPic = $("#globalViewPic");
+			window.onresize = function() {
+				var hh = window.innerHeight - 50;
+				$("#mainFrame").css("height", hh + 'px');
+			};
+		});
+
+		function logout() {
+			$("#logoutForm").submit();
+		}
+	</script>
+</body>
+</html>

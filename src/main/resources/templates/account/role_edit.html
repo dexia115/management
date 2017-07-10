@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout">
+<head>
+<meta charset="UTF-8" />
+<title>编辑角色</title>
+<head th:include="tag::tag" />
+<script type="text/javascript" th:src="@{/js/account/role_edit.js}"></script>
+</head>
+<body>
+	<div>
+		<div class="page-header">&nbsp;</div>
+
+		<div class="col-md-12">
+			<form method="post" th:object="${roleVo}" th:action="@{/role/edit}" id="roleForm">
+				<div>
+					<input type="hidden" id="id" name="id" th:value="*{id}" />
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h3 class="panel-title">编辑角色</h3>
+						</div>
+						<table class="table table-bordered g-table g-table-form">
+							<tr>
+								<td class="g-required">角色名称：</td>
+								<td>
+									<div class="col-md-3">
+										<input type="text" name="name" id="name" class="form-control"
+											th:value="*{name}" />
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td class="g-required">角色标识：</td>
+								<td>
+									<div class="col-md-3">
+										<input type="text" name="code" id="code" class="form-control"
+											th:value="*{code}" />
+									</div>
+								</td>
+							</tr>
+
+							<tr>
+								<td>状态：</td>
+								<td><div class="col-md-3">
+										<select id="enable" name="enable" class="form-control">
+											<option th:selected="*{enable}?selected:0" value="true">启用</option>
+											<option th:selected="*{enable}?0:selected" value="false">停用</option>
+										</select>
+									</div></td>
+							</tr>
+							<tr>
+								<td>操作权限：</td>
+								<td>
+									<div class="col-md-3">
+										<ul id="treeDemo" class="ztree"
+											style="overflow-y: auto; overflow-x: auto; height: 400px; font-size: 13px; font-weight: bold;"></ul>
+										<div id="authorityIdsDiv">
+										<input type="hidden" name="authorityIds" th:each="authId:*{authorityIds}" th:value="${authId}"/>
+										</div>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</div>
+
+				</div>
+				<div class="row">
+					<div class="text-center col-md-4">
+						<button class="btn btn-sm btn-primary" onclick="submitForm();"
+							type="button" data-last="Finish">提交</button>
+					</div>
+				</div>
+			</form>
+
+		</div>
+	</div>
+</body>
+</html>

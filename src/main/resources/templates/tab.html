@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout">
+<head>
+<title>Cloud Retail System</title>
+<link th:href="@{/js/common/tab/css/import_basic.css}" rel="stylesheet" type="text/css"/>
+<!--[if !IE]> -->
+ <script th:src="@{/js/bootstrap/assets/js/jquery.js}" ></script>
+<!-- <![endif]-->
+
+<!--[if IE]>
+<script type="text/javascript">
+ <script th:src="@{/js/bootstrap/assets/js/jquery1x.js}" />
+</script>
+<![endif]-->
+<!-- 兼容高版本jquery下过时的api -->
+<script type="text/javascript">
+	jQuery.browser = {};
+	(function() {
+		jQuery.browser.msie = false;
+		jQuery.browser.version = 0;
+		if (navigator.userAgent.match(/MSIE ([0-9]+)./)) {
+			jQuery.browser.msie = true;
+			jQuery.browser.version = RegExp.$1;
+		}
+	})();
+var token = $("meta[name='_csrf']").attr("content");
+var header = $("meta[name='_csrf_header']").attr("content");
+
+$(document).ajaxSend(function(e, xhr, options) {
+    xhr.setRequestHeader(header, token);
+});
+</script>
+<script th:src="@{/js/bootstrap/assets/js/jquery-ui.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/jquery.form.js}"></script>
+<script th:src="@{/js/bootstrap/assets/js/jquery.validate.js}"></script>
+<script th:src="@{/js/common/mask.js}" ></script>
+<script th:src="@{/js/common/global.js}" ></script>
+<script type="text/javascript" th:src="@{/js/common/tab/js/framework.js}"></script>
+<link  rel="stylesheet" type="text/css" id="skin" prePath="/js/common/tab/" />
+<script type="text/javascript" th:src="@{/js/common/tab/js/tab.js}"></script>
+<script type="text/javascript">
+var tab;	
+$( function() {
+	tab = new TabView( {
+		containerId :'tab_menu',
+		pageid :'page',
+		cid :'tab1',
+		position :"top"
+	});
+	tab.add( {
+		id :'tab1_index1',
+		title :"主页",
+		url :"/welcome",
+		isClosed :false
+	});
+	cmainFrameT();
+	window.onresize=function(){
+		cmainFrameT();
+	};
+});
+function tabAddHandler(mid,mtitle,murl){
+	var menuNumbers = $("#tab_menu").find(".tab_item").length;
+	if(menuNumbers>10){//控制显示菜单数量，超出最大个数则关闭第一个
+		var tabItems = $("#tab_menu").find(".tab_item");
+		var menu_id = $(tabItems[1]).attr("id");
+		tab.close(menu_id);
+	}
+	//mask();
+	tab.update({
+		id :mid,
+		title :mtitle,
+		url :murl,
+		isClosed :true
+	});
+	tab.add({
+		id :mid,
+		title :mtitle,
+		url :murl,
+		isClosed :true
+	});
+	tab.activate(mid);
+}
+function cmainFrameT(){
+	var hmainT = document.getElementById("page");
+	var bheightT = document.documentElement.clientHeight;
+	hmainT.style.width = '100%';
+	hmainT.style.height = (bheightT  - 51) + 'px';
+}
+</script>
+</head>
+<body>
+	<div id="tab_menu" style="height: 30px;"></div>
+	<div style="width: 100%;">
+		<div id="page" style="width: 100%; height: 100%;"></div>
+	</div>
+</body>
+</html>
