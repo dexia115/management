@@ -18,7 +18,7 @@ public class PageVo {
 	
 	private List items;
 
-	private Integer totalCount;// 总记录数
+	private Long totalCount;// 总记录数
 
 	private Integer totalPageCount;// 总页数
 
@@ -45,12 +45,12 @@ public class PageVo {
 	}
 
 
-	public Integer getTotalCount() {
+	public Long getTotalCount() {
 		return totalCount;
 	}
 
 
-	public void setTotalCount(Integer totalCount) {
+	public void setTotalCount(Long totalCount) {
 		this.totalCount = totalCount;
 	}
 

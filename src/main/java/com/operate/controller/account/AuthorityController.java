@@ -20,7 +20,7 @@ import com.operate.tools.CommonUtil;
 import com.operate.tools.Constants;
 import com.operate.tools.Groups;
 import com.operate.tools.JsonObj;
-import com.operate.tools.Page;
+import com.operate.tools.PageObj;
 import com.operate.tools.PageVo;
 import com.operate.tools.PropertyFilter.MatchType;
 import com.operate.tools.ZtreeVo;
@@ -46,7 +46,7 @@ public class AuthorityController {
 	@ResponseBody
 	public PageVo loadAuthority(@Valid PageVo pageVo,Long id, String params){
 		Groups groups = new Groups();
-		Page<Authority> page = new Page<Authority>(pageVo.getPageSize(),pageVo.getPageNo());
+		PageObj<Authority> page = new PageObj<Authority>(pageVo.getPageSize(),pageVo.getPageNo());
 		if(!CommonUtil.isNull(params)){
 			groups = CommonUtil.filterGroup(params);
 		}

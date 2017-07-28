@@ -155,5 +155,10 @@
 
 	<!-- inline scripts related to this page -->
 	<script type="text/javascript" th:src="@{/js/common/login.js}"></script>
+	<script type="text/javascript">
+	if(top.mainFrame != undefined){//session失效跳至登录界面
+		window.top.location.href = "/";
+	}
+	</script>
 </body>
 </html>

@@ -7,9 +7,9 @@ import javax.validation.constraints.Max;
 @SuppressWarnings("rawtypes")
 public class TableVo {
 
-	private int iTotalRecords;
+	private long iTotalRecords;
 
-	private int iTotalDisplayRecords;
+	private long iTotalDisplayRecords;
 
 	// 每页显示数量
 	@Max(value = 200, message = "每页显示最大不能查过200")
@@ -81,19 +81,19 @@ public class TableVo {
 		this.iColumns = iColumns;
 	}
 
-	public int getiTotalRecords() {
+	public long getiTotalRecords() {
 		return iTotalRecords;
 	}
 
-	public void setiTotalRecords(int iTotalRecords) {
+	public void setiTotalRecords(long iTotalRecords) {
 		this.iTotalRecords = iTotalRecords;
 	}
 
-	public int getiTotalDisplayRecords() {
+	public long getiTotalDisplayRecords() {
 		return iTotalDisplayRecords;
 	}
 
-	public void setiTotalDisplayRecords(int iTotalDisplayRecords) {
+	public void setiTotalDisplayRecords(long iTotalDisplayRecords) {
 		this.iTotalDisplayRecords = iTotalDisplayRecords;
 	}
 

@@ -1,8 +1,6 @@
 package com.operate.repository;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -11,9 +9,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -23,8 +18,7 @@ import com.operate.pojo.BaseEntity;
 import com.operate.tools.CommonUtil;
 import com.operate.tools.Group;
 import com.operate.tools.Groups;
-import com.operate.tools.Order;
-import com.operate.tools.Page;
+import com.operate.tools.PageObj;
 import com.operate.tools.PropertyFilter.MatchType;
 import com.operate.tools.ReflectionUtils;
 import com.operate.tools.SearchAnnotation;
@@ -33,9 +27,6 @@ import com.operate.tools.SearchAnnotation;
 @Transactional(readOnly=true)
 public class HibernateRepositoryImpl<T> implements HibernateRepository<T> {
 
-	protected EntityManager entityManger;
-
-	private Class<T> entityClass;
 
 	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
@@ -44,25 +35,18 @@ public class HibernateRepositoryImpl<T> implements HibernateRepository<T> {
 		this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
 	}
 
-	@Resource
-	public void setEntityManger(EntityManager entityManger) {
-		this.entityManger = entityManger;
-	}
-
-	public HibernateRepositoryImpl() {
-		this.entityClass = ReflectionUtils.getSuperClassGenricType(getClass());
-	}
-
-	public Page<T> findPageByGroups(Groups groups, Page<T> page, String sql, Class<?> classes) {
+	public PageObj<T> findPageByGroups(Groups groups, PageObj<T> page, String sql, Class<?> classes) {
 		Integer currentPage = page.getCurrentPage();
 		Integer pageSize = page.getPageSize();
 		Map<String,Object> map = new HashMap<String,Object>();
 		sql = createSqlByGroupsAll(sql, groups, map);
 
-		Integer totalCount = countSqlResult(sql, map);
+		String countSql = prepareCount(sql);
+		
+		Long totalCount = namedParameterJdbcTemplate.queryForObject(countSql, map, Long.class);
 
 		String querySql = sql + " limit :offset ,:pageSize";
-		int offset = (currentPage - 1) * pageSize; // 起始下标
+		long offset = (currentPage - 1) * pageSize; // 起始下标
 		offset = offset > 0 ? offset : 0;
 		offset = offset < totalCount ? offset : totalCount;
 		map.put("offset",offset);
@@ -70,8 +54,6 @@ public class HibernateRepositoryImpl<T> implements HibernateRepository<T> {
 		
 		List<?> items = namedParameterJdbcTemplate.query(querySql, map, BeanPropertyRowMapper.newInstance(classes));
 
-//		List<?> items = namedParameterJdbcTemplate.getJdbcOperations().query(querySql, map.values().toArray(),
-//				BeanPropertyRowMapper.newInstance(classes));
 		page.setTotalCount(totalCount);
 		page.setItems(items);
 
@@ -79,29 +61,28 @@ public class HibernateRepositoryImpl<T> implements HibernateRepository<T> {
 	}
 	
 	/**
-	 * 唐军新增
 	 * 不分割sql
 	 * 
 	 * */
-	public Page<T> findPageByGroupsNoSplit(Groups groups, Page<T> page, String sql, Class<?> classes) {
+	public PageObj<T> findPageByGroupsNoSplit(Groups groups, PageObj<T> page, String sql, Class<?> classes) {
 		Integer currentPage = page.getCurrentPage();
 		Integer pageSize = page.getPageSize();
 		Map<String,Object> map = new HashMap<String,Object>();
 		sql = createSqlByGroupsAll(sql, groups, map);
 
-		Integer totalCount = countSqlNoSplitResult(sql, map);
+		
+		String countSql = prepareNoSplitCount(sql);
+		
+		Long totalCount = namedParameterJdbcTemplate.execute(countSql, map, null);
 
 		String querySql = sql + " limit :offset ,:pageSize";
-		int offset = (currentPage - 1) * pageSize; // 起始下标
+		long offset = (currentPage - 1) * pageSize; // 起始下标
 		offset = offset > 0 ? offset : 0;
 		offset = offset < totalCount ? offset : totalCount;
 		map.put("offset",offset);
 		map.put("pageSize",pageSize);// 分页用的
 		
 		List<?> items = namedParameterJdbcTemplate.query(querySql, map, BeanPropertyRowMapper.newInstance(classes));
-
-//		List<?> items = namedParameterJdbcTemplate.getJdbcOperations().query(querySql, map.values().toArray(),
-//				BeanPropertyRowMapper.newInstance(classes));
 		page.setTotalCount(totalCount);
 		page.setItems(items);
 
@@ -116,267 +97,10 @@ public class HibernateRepositoryImpl<T> implements HibernateRepository<T> {
 		return items;
 	}
 
-	public Page<T> findEntityPageByGroups(Groups groups, String hql, Page<T> page) {
-		Map<String, Object> values = new HashMap<String, Object>();
-
-		hql = createSqlByGroupsAll(hql, groups, values);// 将其按照sql的方式处理，因为hql提前有写好完整的语句
-
-		page = findPage(page, hql, values);
-
-		return page;
-	}
 	
-	@SuppressWarnings("unchecked")
-	public List<T> findEntityByGroups(Groups groups, String hql) {
-		Map<String, Object> values = new HashMap<String, Object>();
-
-		hql = createSqlByGroupsAll(hql, groups, values);// 将其按照sql的方式处理，因为hql提前有写好完整的语句
-		
-		return findListByHql(hql, values);
-	}
-
-	public Page<T> findEntityPageByGroups(Groups groups, Page<T> page) {
-
-		Map<String, Object> values = new HashMap<String, Object>();
-
-		String hql = createHqlByGroupsAll("", groups, values);
-
-		page = findPage(page, hql, values);
-
-		return page;
-	}
-
-	@SuppressWarnings("unchecked")
-	public List<T> findEntityByGroups(Groups groups) {
-		Map<String,Object> values = new HashMap<String,Object>();
-
-		String hql = createHqlByGroupsAll("", groups, values);
-		return findListByHql(hql, values);
-	}
-
-	public Page<T> findPage(final Page<T> page, final String hql, final Map<String,Object> parameter) {
-		TypedQuery<T> q = createTypedQuery(hql, parameter);
-		Long totalCount = countResult(hql, parameter);
-		Integer total = totalCount.intValue();
-		page.setTotalCount(total);
-
-		int pageNo = page.getCurrentPage();
-		int pageSize = page.getPageSize();
-		int first = (pageNo - 1) * pageSize;
-		int totalPageCount = total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
-		page.setTotalPageCount(totalPageCount);
-		if (page.getFromIndex() > -1) {
-			first = page.getFromIndex();
-			pageNo = (first + 1) % pageSize == 0 ? (first + 1) / pageSize : (first + 1) / pageSize + 1;
-			if (first + pageSize >= total - 1) {
-				pageNo = totalPageCount;
-			}
-			page.setCurrentPage(pageNo);
-		}
-		q.setFirstResult(first);
-		q.setMaxResults(pageSize);
-
-		page.setItems(q.getResultList());
-		return page;
-	}
-
-	/**
-	 * 根据条件返回查询总行数
-	 */
-	public long findTotalCountByGroups(Groups groups) {
-
-		Map<String,Object> values = new HashMap<String,Object>();
-
-		String hql = createHqlByGroupsAll("", groups, values);
-
-		long totalCount = countHqlResult(hql, values);
-
-		return totalCount;
-	}
-
-	@Override
-	public void persist(Object entity) {
-		entityManger.persist(entity);
-	}
-
-	@Override
-	public void update(Object entity) {
-		entityManger.merge(entity);
-	}
-
-	@Override
-	public void remove(Object entity) {
-		entityManger.remove(entity);
-	}
 	
-	public Integer excuteSql(String sql,Map<String,Object> parameter){
-		Query query = entityManger.createNativeQuery(sql);
-		if (parameter != null) {
-			for (Map.Entry<String, Object> entry : parameter.entrySet()) {
-				query.setParameter(entry.getKey(), entry.getValue());
-			}
-		}
-		return query.executeUpdate();
-	}
-	public Integer excuteIntgerSql(String sql,Map<Integer,Object> parameter){
-		Query query = entityManger.createNativeQuery(sql);
-		if (parameter != null) {
-			for (Map.Entry<Integer, Object> entry : parameter.entrySet()) {
-				query.setParameter(entry.getKey(), entry.getValue());
-			}
-		}
-		return query.executeUpdate();
-	}
-	
-	/**
-	 * 逻辑删除
-	 * @param id
-	 * @throws SecurityException 
-	 * @throws NoSuchMethodException 
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
-	public void logicDelete(Long id) throws Exception{
-		T entity = find(id);
-		Class clazz = entity.getClass();
-		Method method = clazz.getMethod("setEnable", Boolean.class);
-        method.invoke(entity, false);
-        update(entity);
-	}
-	
-	/**
-	 * 恢复逻辑删除的实体
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void restoreEntity(Long id) throws Exception{
-		T entity = find(id);
-		Class clazz = entity.getClass();
-		Method method = clazz.getMethod("setEnable", Boolean.class);
-        method.invoke(entity, true);
-        update(entity);
-	}
 
-	public T find(Long id) {
-		return (T) entityManger.find(entityClass, id);
-	}
 
-	public T findUniqueBy(final String propertyName, final Object value) {
-		try {
-			String keyName = propertyName.replace(".", "");
-			Class<T> tempclass = ReflectionUtils.getSuperClassGenricType(this.getClass());
-			String hql = " from " + tempclass.getSimpleName() + " where " + propertyName + "=:"+keyName;
-			Map<String,Object> parameter = new HashMap<String,Object>();
-			parameter.put(keyName,value);
-			TypedQuery<T> q = createTypedQuery(hql, parameter);
-			List<T> list = q.getResultList();
-			return list.get(0);
-		} catch (Exception e) {
-			return null;
-		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	public List<Object> findBySql(Groups groups, String[] selectStr, String[] groupStr) {
-		String sql = "";
-		if (groups.getOrderby() != null) {
-			groups.setOrderby("");
-		}
-		Map<String,Object> objects = new HashMap<String,Object>();
-		sql = composeString2(groups, null, selectStr, groupStr, objects);
-		Query q = createSqlQuery(sql, objects);
-
-		return q.getResultList();
-	}
-	
-	@SuppressWarnings("unchecked")
-	public List<Object> findBySql(String sql,Map<String,Object> parameter){
-		Query q = createSqlQuery(sql, parameter);
-		return q.getResultList();
-	}
-	
-	@SuppressWarnings("unchecked")
-	public List<Object> findByHql(Groups groups, String[] selectStr, String[] groupStr) {
-		String hql = "";
-		if (groups.getOrderby() != null) {
-			groups.setOrderby("");
-		}
-		Map<String,Object> objects = new HashMap<String,Object>();
-		hql = composeString(groups, null, selectStr, groupStr, objects);
-		Query q = createQuery(hql, objects);
-
-		return q.getResultList();
-	}
-	
-	public Long findSumByGroupsAlias(Groups groups, String field){
-		List<Object> objs = findByHql(groups, new String[]{field}, null);
-		Long result = 0L;
-		for(Object obj : objs){
-			result += Long.valueOf(obj.toString());
-		}
-		return result;
-	}
-	
-	public List<Long> findEntityByGroupsAlias(Groups groups, String field){
-		List<Long> userIds = new ArrayList<>();
-		List<Object> objs = findByHql(groups, new String[]{field}, new String[]{field});
-		for(Object obj : objs){
-			if(obj instanceof Object[]){
-				Object[] arrays = (Object[]) obj;
-				if(arrays.length > 1){
-					userIds.add(Long.valueOf(arrays[1].toString()));
-				}
-			}else{
-				userIds.add(Long.valueOf(obj.toString()));
-			}
-		}
-		return userIds;
-	}
-	
-	public List<Long> findSqlByGroupsAlias(Groups groups, String field){
-		List<Long> userIds = new ArrayList<>();
-		List<Object> objs = findBySql(groups, new String[]{field}, new String[]{field});
-		for(Object obj : objs){
-			userIds.add(Long.valueOf(obj.toString()));
-		}
-		return userIds;
-	}
-
-	@SuppressWarnings("rawtypes")
-	protected List findListByHql(String hql, Map<String,Object> parameter) {
-		Query q = createQuery(hql, parameter);
-		return q.getResultList();
-	}
-
-	protected Integer countSqlResult(final String sql, final Map<String,Object> parameter) {
-		String countSql = prepareCount(sql);
-		try {
-			BigInteger count = findUniqueBySql(countSql, parameter);
-
-			return count.intValue();
-		} catch (Exception e) {
-			throw new RuntimeException("sql can't be auto count, sql is:" + countSql, e);
-		}
-	}
-
-	protected Integer countSqlNoSplitResult(final String sql, final Map<String,Object> parameter) {
-		String countSql = prepareNoSplitCount(sql);
-		try {
-			BigInteger count = findUniqueBySql(countSql, parameter);
-
-			return count.intValue();
-		} catch (Exception e) {
-			throw new RuntimeException("sql can't be auto count, sql is:" + countSql, e);
-		}
-	}
-	protected long countHqlResult(final String hql, final Map<String,Object> parameter) {
-		String countHql = prepareCountHql(hql);
-		try {
-			Long count = findUnique(countHql, parameter);
-			return count;
-		} catch (Exception e) {
-			throw new RuntimeException("hql can't be auto count, hql is:" + countHql, e);
-		}
-	}
 
 	protected String prepareCountHql(String orgHql) {
 		String fromHql = orgHql;
@@ -387,484 +111,9 @@ public class HibernateRepositoryImpl<T> implements HibernateRepository<T> {
 		String countHql = "select count(id) " + fromHql;
 		return countHql;
 	}
-
-	@SuppressWarnings("unchecked")
-	protected <X> X findUnique(final String hql, final Map<String,Object> parameter) {
-		return (X) createQuery(hql, parameter).getSingleResult();
-	}
-
-	@SuppressWarnings("unchecked")
-	protected <X> X findUniqueBySql(final String sql, final Map<String,Object> parameter) {
-		return (X) createSqlQuery(sql, parameter).getSingleResult();
-	}
-
-	protected Long countResult(final String hql, final Map<String,Object> parameter) {
-		String countHql = prepareCount(hql);
-		try {
-			Long count = findUnique(countHql, parameter);
-
-			return count;
-		} catch (Exception e) {
-			throw new RuntimeException("sql can't be auto count, sql is:" + countHql, e);
-		}
-	}
-
-	private Query createQuery(final String hql, final Map<String,Object> parameter) {
-		Query query = entityManger.createQuery(hql);
-		if (parameter != null) {
-			for (Map.Entry<String, Object> entry : parameter.entrySet()) {
-				query.setParameter(entry.getKey(), entry.getValue());
-			}
-		}
-		return query;
-	}
-
-	private TypedQuery<T> createTypedQuery(final String hql, final Map<String,Object> parameter) {
-		TypedQuery<T> query = entityManger.createQuery(hql, entityClass);
-		if (parameter != null) {
-			for (Map.Entry<String, Object> entry : parameter.entrySet()) {
-				query.setParameter(entry.getKey(), entry.getValue());
-			}
-		}
-		return query;
-	}
-
-	private String createHqlByGroupsAll(String hql, Groups groups, Map<String, Object> values) {
-		// from段
-		StringBuffer fromBuffer = new StringBuffer(" ");
-		// where 段
-		StringBuffer whereBufferQian = new StringBuffer(" where 1=1 ");
-		StringBuffer whereBufferHou = new StringBuffer("");
-
-		// 存取相同前缀
-		List<String> Alias1 = new LinkedList<String>();
-		Class<T> tempclass = ReflectionUtils.getSuperClassGenricType(this.getClass());
-		fromBuffer.append(" from " + tempclass.getSimpleName() + " as " + tempclass.getSimpleName());
-		try {
-			appendGroups(groups, fromBuffer, whereBufferQian, tempclass, Alias1, whereBufferHou, values);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		hql = fromBuffer.toString() + whereBufferQian.toString() + whereBufferHou.toString();
-
-		String temp = "";
-		if (groups.getOrderbys() != null && groups.getOrderbys().length > 0) {
-			StringBuffer sBuffer = new StringBuffer();
-			for (int i = 0; i < groups.getOrderbys().length; i++) {// groups接受orderby数组进行多条件排序
-				if (i == 0) {
-					sBuffer.append(" order by ");
-				}
-				// order by 别名处理
-				temp = groups.getOrderbys()[i];
-
-				if (temp.isEmpty())
-					continue;
-				
-				String order = groups.getOrders()[i];
-
-				sBuffer.append(tempclass.getSimpleName() + "." + temp + " "+order+",");
-			}
-			hql += sBuffer.deleteCharAt(sBuffer.length() - 1).toString();
-		} else if (null != groups.getOrderby() && !"".equals(groups.getOrderby().trim())) {
-			// 处理order by的别名
-			temp = groups.getOrderby();
-
-			String order = groups.getOrder();
-			hql += " order by " + tempclass.getSimpleName() + "." + temp + " "+order;
-		}
-
-		return hql;
-	}
-
-	/**
-	 * 只支持HQL
-	 * @param groups
-	 * @param page
-	 * @param selectStr
-	 * @param groupStr
-	 * @param values
-	 * @return
-	 */
-	private String composeString(final Groups groups, Page<T> page, String[] selectStr, String[] groupStr,
-			Map<String, Object> values) {
-		// from段
-		StringBuffer fromBuffer = new StringBuffer(" ");
-		// where 段
-		StringBuffer whereBufferQian = new StringBuffer(" where 1=1 ");
-		StringBuffer whereBufferHou = new StringBuffer("");
-
-		// 存取相同前缀
-		List<String> Alias1 = new LinkedList<String>();
-		Class<T> tempclass = ReflectionUtils.getSuperClassGenricType(this.getClass());
-		fromBuffer.append(" from " + tempclass.getSimpleName() + " as " + tempclass.getSimpleName());
-
-		// 有条件组内容
-		appendGroups(groups, fromBuffer, whereBufferQian, tempclass, Alias1, whereBufferHou, values);
-		String hql = "";
-		List<Order> orders = new ArrayList<Order>();
-		if ((groups.getOrderbys() == null || groups.getOrderbys().length <= 0) && groups.getOrderby() != null
-				&& !groups.getOrderby().equals("")) {
-			Order order = new Order();
-			order.setField(groups.getOrderby());
-			order.setSortType(groups.getOrder());
-			orders.add(order);
-		}
-		if (groups.getOrderbys() != null && groups.getOrderbys().length > 0) {
-			for (int i = 0; i < groups.getOrderbys().length; i++) {
-				Order order = new Order();
-				order.setField(groups.getOrderbys()[i]);
-				order.setSortType(groups.getOrders()[i]);
-				orders.add(order);
-			}
-		}
-
-		StringBuffer orderBuffer = new StringBuffer();
-		if (orders.size() > 0) {
-			orderBuffer = new StringBuffer(" order by ");
-			appendOrder(orders, orderBuffer, tempclass, Alias1, fromBuffer, whereBufferQian);
-
-		}
-		StringBuffer slectBuffer = new StringBuffer(" select ");
-		if (selectStr != null && selectStr.length != 0) {
-			appendSelect(selectStr, slectBuffer, tempclass, Alias1, fromBuffer, whereBufferQian);
-			if (!slectBuffer.toString().trim().equals("select")) {
-				hql += slectBuffer.toString() + " ";
-			}
-		}
-		if (whereBufferQian.toString().trim().equals("where 1=1")) {
-			hql += fromBuffer.append(whereBufferQian).append("  ").append(whereBufferHou).append(" ").toString();
-		} else {
-			hql += fromBuffer.append(whereBufferQian).append(" and ").append(whereBufferHou).append(" ").toString();
-		}
-		if (groupStr != null && groupStr.length != 0) {
-			StringBuffer groupBuffer = new StringBuffer(" group by  ");
-			appendGroup(groupStr, groupBuffer, tempclass, Alias1, fromBuffer, whereBufferQian);
-			if (!groupBuffer.toString().trim().equals("groupby")) {
-				hql += groupBuffer.toString() + " ";
-			}
-		}
-		if (orderBuffer.toString().length() != 0) {
-			hql += orderBuffer;
-		}
-		return hql;
-	}
 	
-	/**
-	 * 只支持SQL
-	 * @param groups
-	 * @param page
-	 * @param selectStr
-	 * @param groupStr
-	 * @param values
-	 * @return
-	 */
-	private String composeString2(final Groups groups, Page<T> page, String[] selectStr, String[] groupStr,
-			Map<String, Object> values) {
-		// from段
-		StringBuffer fromBuffer = new StringBuffer(" ");
-		// where 段
-		StringBuffer whereBufferQian = new StringBuffer(" where 1=1 ");
-		StringBuffer whereBufferHou = new StringBuffer("");
 
-		// 存取相同前缀
-		List<String> Alias1 = new LinkedList<String>();
-		Class<T> tempclass = ReflectionUtils.getSuperClassGenricType(this.getClass());
-		String className = tempclass.getSimpleName();
-		String table = CommonUtil.camelToUnderline(className);
-		fromBuffer.append(" from " + table + " as " + className);
 
-		// 有条件组内容
-		appendGroups2(groups, fromBuffer, whereBufferQian, Alias1, whereBufferHou, values);
-//		appendGroups(groups, fromBuffer, whereBufferQian, tempclass, Alias1, whereBufferHou, values);
-		String sql = "";
-		List<Order> orders = new ArrayList<Order>();
-		if ((groups.getOrderbys() == null || groups.getOrderbys().length <= 0) && groups.getOrderby() != null
-				&& !groups.getOrderby().equals("")) {
-			Order order = new Order();
-			order.setField(groups.getOrderby());
-			order.setSortType(groups.getOrder());
-			orders.add(order);
-		}
-		if (groups.getOrderbys() != null && groups.getOrderbys().length > 0) {
-			for (int i = 0; i < groups.getOrderbys().length; i++) {
-				Order order = new Order();
-				order.setField(groups.getOrderbys()[i]);
-				order.setSortType(groups.getOrders()[i]);
-				orders.add(order);
-			}
-		}
-
-		StringBuffer orderBuffer = new StringBuffer();
-		if (orders.size() > 0) {
-			orderBuffer = new StringBuffer(" order by ");
-			appendOrder2(orders, orderBuffer, tempclass, Alias1, fromBuffer, whereBufferQian);
-
-		}
-		StringBuffer slectBuffer = new StringBuffer(" select ");
-		if (selectStr != null && selectStr.length != 0) {
-			appendSelect2(selectStr, slectBuffer, tempclass, Alias1, fromBuffer, whereBufferQian);
-			if (!slectBuffer.toString().trim().equals("select")) {
-				sql += slectBuffer.toString() + " ";
-			}
-		}
-		if (whereBufferQian.toString().trim().equals("where 1=1")) {
-			sql += fromBuffer.append(whereBufferQian).append("  ").append(whereBufferHou).append(" ").toString();
-		} else {
-			sql += fromBuffer.append(whereBufferQian).append(" and ").append(whereBufferHou).append(" ").toString();
-		}
-		if (groupStr != null && groupStr.length != 0) {
-			StringBuffer groupBuffer = new StringBuffer(" group by  ");
-			appendGroup2(groupStr, groupBuffer, tempclass, Alias1, fromBuffer, whereBufferQian);
-			if (!groupBuffer.toString().trim().equals("groupby")) {
-				sql += groupBuffer.toString() + " ";
-			}
-		}
-		if (orderBuffer.toString().length() != 0) {
-			sql += orderBuffer;
-		}
-		return sql;
-	}
-
-	private void appendSelect(String[] selectStrings, StringBuffer slectBuffer, Class<?> baseClass, List<String> Alias1,
-			StringBuffer fromBuffer, StringBuffer whereBufferQian) {
-		if (selectStrings == null || selectStrings.length == 0) {
-
-		} else {
-			for (String selectStr : selectStrings) {
-				String tem = "";
-				if (selectStr.contains("sum")) {
-					tem = selectStr.substring(selectStr.indexOf("(") + 1, selectStr.indexOf(")"));
-				} else if (selectStr.contains("count")) {
-					tem = selectStr.substring(selectStr.indexOf("(") + 1, selectStr.indexOf(")"));
-				} else {
-					tem = selectStr;
-				}
-				String[] strings = CommonUtil.split(tem, ".");
-				if (strings == null || strings.length == 0) {
-					System.out.println("查询参数错误，请查证！");
-				}
-				Class<?> temClass = baseClass;
-				Field value = null;
-				StringBuffer temBuffer = new StringBuffer();
-				String temName = baseClass.getSimpleName();
-				for (String string : strings) {
-
-					value = ReflectionUtils.getAllField(temClass, string);
-
-					try {
-						temClass = value.getType();
-					} catch (Exception e) {
-						slectBuffer.append(" '");
-						slectBuffer.append(string);
-						slectBuffer.append(" ' ");
-						slectBuffer.append(",");
-						continue;
-					}
-					temBuffer.append(string + ".");
-					// 如果是集合
-					if (ReflectionUtils.isInherit(temClass, List.class, true)) {
-						SearchAnnotation searchAnnotation = value.getAnnotation(SearchAnnotation.class);
-						if (searchAnnotation != null) {
-
-							if (!Alias1.contains(temBuffer.subSequence(0, temBuffer.length() - 1))) {
-								Alias1.add(temBuffer.subSequence(0, temBuffer.length() - 1).toString());
-								fromBuffer.append(" left join ").append(temName).append(".").append(string).append(" ")
-										.append(" as ").append(string);
-
-							}
-							temName = string;
-							temClass = searchAnnotation.Class();
-						} else {
-							System.out.println("多对多关系必须要配置好注解searchAnnotation的别名");
-						}
-					}
-					if (selectStr.contains("sum")) {
-						slectBuffer.append(" sum( ");
-					} else if (selectStr.contains("count")) {
-						slectBuffer.append(" count( ");
-					}
-					slectBuffer.append(temName).append(".").append(string);
-					if (selectStr.contains("sum") || selectStr.contains("count")) {
-						slectBuffer.append(" ) ");
-					}
-					slectBuffer.append(",");
-				}
-			}
-			slectBuffer = slectBuffer.delete(slectBuffer.length() - 1, slectBuffer.length());
-		}
-	}
-	
-	private void appendSelect2(String[] selectStrings, StringBuffer slectBuffer, Class<?> baseClass, List<String> Alias1,
-			StringBuffer fromBuffer, StringBuffer whereBufferQian) {
-		if (selectStrings == null || selectStrings.length == 0) {
-
-		} else {
-			for (String selectStr : selectStrings) {
-				String tem = "";
-				if (selectStr.contains("sum")) {
-					tem = selectStr.substring(selectStr.indexOf("(") + 1, selectStr.indexOf(")"));
-				} else if (selectStr.contains("count")) {
-					tem = selectStr.substring(selectStr.indexOf("(") + 1, selectStr.indexOf(")"));
-				} else {
-					tem = selectStr;
-				}
-				if (selectStr.contains("sum")) {
-					slectBuffer.append(" sum( ");
-				} else if (selectStr.contains("count")) {
-					slectBuffer.append(" count( ");
-				}
-				slectBuffer.append(tem);
-				if (selectStr.contains("sum") || selectStr.contains("count")) {
-					slectBuffer.append(" ) ");
-				}
-				slectBuffer.append(",");
-			}
-			slectBuffer = slectBuffer.delete(slectBuffer.length() - 1, slectBuffer.length());
-		}
-	}
-
-	private void appendOrder(List<Order> orders, StringBuffer orderBuffer, Class<?> baseClass, List<String> Alias1,
-			StringBuffer fromBuffer, StringBuffer whereBufferQian) {
-
-		for (Order order : orders) {
-			String tem = "";
-			tem = order.getField();
-			String[] strings = CommonUtil.split(tem, ".");
-			if (strings == null || strings.length == 0) {
-				System.out.println("查询参数错误，请查证！");
-			}
-			Class<?> temClass = baseClass;
-			Field value = null;
-			StringBuffer temBuffer = new StringBuffer();
-			String temName = baseClass.getSimpleName();
-			for (String string : strings) {
-				value = ReflectionUtils.getAllField(temClass, string);
-				temClass = value.getType();
-				temBuffer.append(string + ".");
-				// 如果是集合
-				try {
-					if (ReflectionUtils.isInherit(temClass, List.class, true)) {
-						SearchAnnotation searchAnnotation = value.getAnnotation(SearchAnnotation.class);
-						if (searchAnnotation != null) {
-							if (!Alias1.contains(temBuffer.subSequence(0, temBuffer.length() - 1))) {
-								Alias1.add(temBuffer.subSequence(0, temBuffer.length() - 1).toString());
-								fromBuffer.append(" left join ").append(temName).append(".").append(string).append(" ")
-										.append(" as ").append(string);
-							}
-							temClass = searchAnnotation.Class();
-							temName = string;
-						} else {
-							System.out.println("多对多关系必须要配置好注解searchAnnotation的别名");
-						}
-					}
-					orderBuffer.append(temName).append(".").append(string);
-					orderBuffer.append(" "+order.getSortType()+" ");
-					orderBuffer.append(",");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		orderBuffer = orderBuffer.delete(orderBuffer.length() - 1, orderBuffer.length());
-	}
-	
-	private void appendOrder2(List<Order> orders, StringBuffer orderBuffer, Class<?> baseClass, List<String> Alias1,
-			StringBuffer fromBuffer, StringBuffer whereBufferQian) {
-
-		for (Order order : orders) {
-			String tem = "";
-			tem = order.getField();
-			orderBuffer.append(tem);
-			orderBuffer.append(" "+order.getSortType()+" ");
-			orderBuffer.append(",");
-		}
-		orderBuffer = orderBuffer.delete(orderBuffer.length() - 1, orderBuffer.length());
-	}
-
-	private void appendGroup(String[] groupStrings, StringBuffer groupBuffer, Class<?> baseClass, List<String> Alias1,
-			StringBuffer fromBuffer, StringBuffer whereBufferQian) {
-		if (groupStrings == null || groupStrings.length == 0) {
-
-		} else {
-			for (String groupStr : groupStrings) {
-				String tem = "";
-				tem = groupStr;
-				if (tem.contains("sum") || tem.contains("count")) {
-					continue;
-				}
-				String[] strings = CommonUtil.split(tem, ".");
-
-				if (strings == null || strings.length == 0) {
-					System.out.println("查询参数错误，请查证！");
-				}
-				Class<?> temClass = baseClass;
-				Field value = null;
-				StringBuffer temBuffer = new StringBuffer();
-				String temName = baseClass.getSimpleName();
-				for (String string : strings) {
-					value = ReflectionUtils.getAllField(temClass, string);
-					temClass = value.getType();
-					temBuffer.append(string + ".");
-					// 如果是集合
-					if (ReflectionUtils.isInherit(temClass, List.class, true)) {
-						SearchAnnotation searchAnnotation = value.getAnnotation(SearchAnnotation.class);
-						if (searchAnnotation != null) {
-
-							if (!Alias1.contains(temBuffer.subSequence(0, temBuffer.length() - 1))) {
-								Alias1.add(temBuffer.subSequence(0, temBuffer.length() - 1).toString());
-								fromBuffer.append(" left join ").append(temName).append(".").append(string).append(" ")
-										.append(" as ").append(string);
-
-							}
-							temClass = searchAnnotation.Class();
-							temName = string;
-						} else {
-							System.out.println("多对多关系必须要配置好注解searchAnnotation的别名");
-						}
-					} else {
-						groupBuffer.append(temName).append(".").append(string);
-						groupBuffer.append(",");
-					}
-				}
-
-			}
-			groupBuffer = groupBuffer.delete(groupBuffer.length() - 1, groupBuffer.length());
-
-		}
-	}
-	
-	
-	private void appendGroup2(String[] groupStrings, StringBuffer groupBuffer, Class<?> baseClass, List<String> Alias1,
-			StringBuffer fromBuffer, StringBuffer whereBufferQian) {
-
-		if (groupStrings == null || groupStrings.length == 0) {
-
-		} else {
-			for (String groupStr : groupStrings) {
-				String tem = "";
-				tem = groupStr;
-				if (tem.contains("sum") || tem.contains("count")) {
-					continue;
-				}
-				groupBuffer.append(groupStr);
-				groupBuffer.append(",");
-
-			}
-			groupBuffer = groupBuffer.delete(groupBuffer.length() - 1, groupBuffer.length());
-		}
-	}
-
-	private Query createSqlQuery(final String sql, final Map<String,Object> parameter) {
-
-		Query query = entityManger.createNativeQuery(sql);
-		if (parameter != null) {
-			for (Map.Entry<String, Object> entry : parameter.entrySet()) {
-				query.setParameter(entry.getKey(), entry.getValue());
-			}
-		}
-		return query;
-	}
 
 	private String prepareCount(String query) {
 		// select子句与order by子句会影响count查询,进行简单的排除.
@@ -1171,54 +420,6 @@ public class HibernateRepositoryImpl<T> implements HibernateRepository<T> {
 		}
 	}
 
-	private void appendGroups(Groups groups, StringBuffer fromBuffer, StringBuffer whereBufferQian, Class<?> tempclass,
-			List<String> Alias1, StringBuffer whereBufferHou, Map<String, Object> values) {
-		if (groups.getGroupList() == null) {
-			System.out.println("groups的GroupList不能为空！");
-		} else {
-			if (groups.getChildGroupsList() != null && !groups.getChildGroupsList().isEmpty()
-					|| groups.getParentRelation() != null) {
-				for (Group group : groups.getGroupList()) {
-					appendGroup(group, fromBuffer, whereBufferQian, tempclass, Alias1, whereBufferHou, values);
-				}
-				for (Groups tGroup : groups.getChildGroupsList()) {
-					if (tGroup.getParentRelation() == MatchType.AND) {
-						whereBufferHou.append(" and ( ");
-						appendGroups(tGroup, fromBuffer, whereBufferQian, tempclass, Alias1, whereBufferHou, values);
-						whereBufferHou.append(" )");
-					} else if (tGroup.getParentRelation() == MatchType.OR) {
-						whereBufferHou.append(" or ( ");
-						appendGroups(tGroup, fromBuffer, whereBufferQian, tempclass, Alias1, whereBufferHou, values);
-						whereBufferHou.append(" )");
-					}
-				}
-			} else {
-				StringBuffer whereAnd = new StringBuffer();
-				StringBuffer whereOr = new StringBuffer();
-//				List<Object> tempList = new ArrayList<Object>();
-				for (Group group : groups.getGroupList()) {
-					if (group.getRelation().equals(MatchType.AND)) {
-						appendGroup(group, fromBuffer, whereBufferQian, tempclass, Alias1, whereAnd, values);
-					} else {
-						if (whereOr.toString().equals("")) {
-							whereOr.append(" and ( ");
-						}
-						appendGroup(group, fromBuffer, whereBufferQian, tempclass, Alias1, whereOr, values);
-//						tempList.add(group.getPropertyValue1());
-//						values.remove(group.getPropertyValue1());
-					}
-
-				}
-				if (!whereOr.toString().equals("")) {
-					whereOr.append(" ) ");
-				}
-//				for (Object temp : tempList) {
-//					values.add(temp);
-//				}
-				whereBufferHou.append(whereAnd).append(whereOr);
-			}
-		}
-	}
 
 	@SuppressWarnings("incomplete-switch")
 	private void appendGroup(Group group, StringBuffer fromBuffer, StringBuffer whereBufferQian, Class<?> baseClass,
@@ -1410,5 +611,7 @@ public class HibernateRepositoryImpl<T> implements HibernateRepository<T> {
 			break;
 		}
 	}
+
+	
 
 }

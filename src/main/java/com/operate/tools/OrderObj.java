@@ -1,6 +1,6 @@
 package com.operate.tools;
 
-public class Order {
+public class OrderObj {
 	private String field;
 	private String sortType;
 	public String getField() {

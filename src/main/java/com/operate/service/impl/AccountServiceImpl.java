@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +16,7 @@ import com.operate.repository.account.RoleRepository;
 import com.operate.repository.account.UserRepository;
 import com.operate.service.AccountService;
 import com.operate.tools.Groups;
-import com.operate.tools.Page;
+import com.operate.tools.PageObj;
 import com.operate.vo.account.AuthorityVo;
 import com.operate.vo.account.RoleVo;
 import com.operate.vo.account.UserVo;
@@ -30,10 +31,12 @@ public class AccountServiceImpl implements AccountService {
 	@Autowired
 	private AuthorityRepository authorityRepository;
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public Page findUserPageByGroups(Groups groups, Page page) {
+	public PageObj findUserPageByGroups(Groups groups, PageObj page) {
 		userRepository.findEntityPageByGroups(groups, page);
 		page.setItems(User.toVoList(page.getItems()));
+		
 		return page;
 	}
 	
@@ -50,6 +53,7 @@ public class AccountServiceImpl implements AccountService {
 		return null;
 	}
 	
+	@Cacheable(value="user")
 	@Override
 	public UserVo findUser(Long id){
 		User user = userRepository.find(id);
@@ -60,7 +64,7 @@ public class AccountServiceImpl implements AccountService {
 	@Override
 	public void saveUser(UserVo userVo) throws Exception {
 		User user = User.fromVo(userVo);
-		userRepository.persist(user);		
+		userRepository.save(user);		
 	}
 	
 	@Transactional
@@ -72,7 +76,7 @@ public class AccountServiceImpl implements AccountService {
 		temp.setEnable(user.getEnable());
 		temp.setRealName(user.getRealName());
 		temp.setRoles(user.getRoles());
-		userRepository.update(temp);
+		userRepository.save(temp);
 	}
 	
 	@Transactional
@@ -80,15 +84,17 @@ public class AccountServiceImpl implements AccountService {
 	public void updatePassword(Long id, String password) throws Exception{
 		User user = userRepository.find(id);
 		user.setPassword(password);
-		userRepository.update(user);
+		userRepository.save(user);
 	}
 	
 	
 	
 	@Override
-	public Page findRolePageByGroups(Groups groups, Page page) {
+	public PageObj findRolePageByGroups(Groups groups, PageObj page) {
 		roleRepository.findEntityPageByGroups(groups, page);
 		page.setItems(Role.toVoList(page.getItems()));
+//		String sql = "select id,code,name from account_role";
+//		roleRepository.findPageByGroups(groups, page, sql, RoleVo.class);
 		
 		return page;
 	}
@@ -108,7 +114,7 @@ public class AccountServiceImpl implements AccountService {
 	@Override
 	public void saveRole(RoleVo roleVo) throws Exception {
 		Role role = Role.fromVo(roleVo);
-		roleRepository.persist(role);
+		roleRepository.save(role);
 	}
 	
 	@Transactional
@@ -127,13 +133,13 @@ public class AccountServiceImpl implements AccountService {
 			role.setAuthoritys(authoritys);
 		}
 		
-		roleRepository.update(role);
+		roleRepository.save(role);
 	}
 	
 	
 
 	@Override
-	public Page findAuthorityPageByGroups(Groups groups, Page page) {
+	public PageObj findAuthorityPageByGroups(Groups groups, PageObj page) {
 		authorityRepository.findEntityPageByGroups(groups, page);
 		page.setItems(Authority.toVoList(page.getItems()));
 		
@@ -150,7 +156,7 @@ public class AccountServiceImpl implements AccountService {
 	@Override
 	public void saveAuthority(AuthorityVo authorityVo) throws Exception {
 		Authority authority = Authority.fromVo(authorityVo);
-		authorityRepository.persist(authority);
+		authorityRepository.save(authority);
 	}
 
 	@Transactional
@@ -167,13 +173,13 @@ public class AccountServiceImpl implements AccountService {
 		if(parentId != null){
 			authority.setParent(new Authority(parentId));
 		}
-		authorityRepository.update(authority);
+		authorityRepository.save(authority);
 	}
 
 	@Transactional
 	@Override
 	public void deleteAuthority(Long id) throws Exception {
-		authorityRepository.remove(authorityRepository.find(id));
+		authorityRepository.delete(id);
 	}
 
 	

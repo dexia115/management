@@ -5,12 +5,12 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @SuppressWarnings("rawtypes")
-public class Page<T> {
+public class PageObj<T> {
 
-	public Page() {
+	public PageObj() {
 	}
 
-	public Page(int pageSize, int currentPage) {
+	public PageObj(int pageSize, int currentPage) {
 		this.pageSize = pageSize;
 		this.currentPage = currentPage;
 	}
@@ -18,7 +18,7 @@ public class Page<T> {
 	private List items;
 
 	//总记录数
-	private int totalCount;
+	private long totalCount;
 
 	//总共页数
 	private int totalPageCount;
@@ -40,16 +40,16 @@ public class Page<T> {
 		this.items = items;
 	}
 
-	public int getTotalCount() {
+	public long getTotalCount() {
 		return totalCount;
 	}
 
-	public void setTotalCount(int totalCount) {
+	public void setTotalCount(long totalCount) {
 		this.totalCount = totalCount;
 	}
 
 	public int getTotalPageCount() {
-		totalPageCount = totalCount % pageSize == 0 ? totalCount / pageSize : totalCount / pageSize + 1;
+//		totalPageCount = totalCount % pageSize == 0 ? totalCount / pageSize : totalCount / pageSize + 1;
 		return totalPageCount;
 	}
 

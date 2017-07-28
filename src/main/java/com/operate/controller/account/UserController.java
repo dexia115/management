@@ -21,7 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import com.operate.tools.Groups;
 import com.operate.tools.JsonObj;
-import com.operate.tools.Page;
+import com.operate.tools.PageObj;
+import com.operate.tools.PropertyFilter.MatchType;
 import com.operate.tools.TableVo;
 import com.operate.vo.account.RoleVo;
 import com.operate.vo.account.UserVo;
@@ -69,11 +70,25 @@ public class UserController {
         	colname = "id";
         	dir = "desc";
         }
+//        List<Long> ids = new ArrayList<>();
+//        ids.add(1L);
+//        ids.add(2L);
+//        groups.Add("id",ids,MatchType.NOTIN);
+//        groups.Add("realName","",MatchType.NOTNULL);
+        
+//        List<Groups> childGroupsList = new ArrayList<Groups>();
+//		Groups groups2 = new Groups();
+//		groups2.Add("userName","luke",MatchType.LIKE,MatchType.OR);
+//		groups2.Add("realName","test8",MatchType.EQ,MatchType.OR);
+//		groups2.setParentRelation(MatchType.AND);
+//		childGroupsList.add(groups2);
+//		groups.setChildGroupsList(childGroupsList);
+        
         groups.setOrderby(colname);
         groups.setOrder(dir);
-        Page<User> page = new Page<User>(pageSize,currentPage);
+        PageObj<User> page = new PageObj<User>(pageSize,currentPage);
         accountService.findUserPageByGroups(groups, page);
-        int total = page.getTotalCount();
+        Long total = page.getTotalCount();
         tableVo.setAaData(page.getItems());
         tableVo.setiTotalDisplayRecords(total);
         tableVo.setiTotalRecords(total);

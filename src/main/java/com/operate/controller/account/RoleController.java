@@ -22,7 +22,7 @@ import com.operate.service.AccountService;
 import com.operate.tools.CommonUtil;
 import com.operate.tools.Groups;
 import com.operate.tools.JsonObj;
-import com.operate.tools.Page;
+import com.operate.tools.PageObj;
 import com.operate.tools.TableVo;
 import com.operate.vo.account.RoleVo;
 
@@ -61,9 +61,9 @@ public class RoleController {
 		Groups groups = CommonUtil.filterGroup(params);
 		groups.setOrderby(colname);
 		groups.setOrder(dir);
-		Page<Role> page = new Page<Role>(pageSize,currentPage);
+		PageObj<Role> page = new PageObj<Role>(pageSize,currentPage);
 		accountService.findRolePageByGroups(groups, page);
-		int total = page.getTotalCount();
+		long total = page.getTotalCount();
 		tableVo.setAaData(page.getItems());
 		tableVo.setiTotalDisplayRecords(total);
 		tableVo.setiTotalRecords(total);

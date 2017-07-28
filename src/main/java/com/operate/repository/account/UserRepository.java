@@ -1,8 +1,11 @@
 package com.operate.repository.account;
 
-import com.operate.repository.HibernateRepository;
+import com.operate.repository.CustomRepository;
+import org.springframework.cache.annotation.CacheConfig;
+
 import com.operate.pojo.account.User;
 
-public interface UserRepository extends HibernateRepository<User>{
+@CacheConfig(cacheNames = "user")
+public interface UserRepository extends CustomRepository<User,Long>{
 
 }
