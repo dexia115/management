@@ -99,6 +99,18 @@ public class CommonUtil {
 	}
 
 	
+	public static byte[] writeToFile(String content){
+		int len = content.getBytes().length;
+		if (len > 2 * 1024 * 1024) {//控制在2M以内
+			return null;
+		}
+		content = content.replace("data:image/jpeg;base64,", "").replace("data:image/png;base64,", "")
+				.replace("data:image/bmp;base64,", "").replace("data:image/gif;base64,", "");
+		byte[] byteArray = Base64.getDecoder().decode(content);// base64解码
+		
+		return byteArray;
+	}
+	
 	/**
 	 * 
 	 * @param content
