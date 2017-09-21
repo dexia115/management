@@ -1,5 +1,6 @@
 package com.operate;
 
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -19,6 +20,7 @@ import com.operate.repository.BaseRepositoryFactoryBean;
 @EnableEurekaClient
 @EnableFeignClients(basePackages={"com.operate.service.attachment"})
 @EnableCircuitBreaker
+@EnableRabbit
 public class ManagementApp extends SpringBootServletInitializer {
 
 	@Override

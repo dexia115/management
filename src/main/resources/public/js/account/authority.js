@@ -82,6 +82,7 @@ $(function(){
 function search(){
 	var searchs = getSearchGroup();
 	var str = "[" + searchs.join(",") + "]";
+	str = encodeURI(str);
 	var obj = $("#itemGrid");
 	var levels = $("#levels").val();
 	var other = "";
@@ -94,7 +95,7 @@ function search(){
 			other = "&id="+parentId;
 		}
 	}
-	var url = "loadAuthority?params="+str;
+	var url = "/authority/loadAuthority?params="+str;
 	if(!isnull(other)){
 		url += other;
 	}
