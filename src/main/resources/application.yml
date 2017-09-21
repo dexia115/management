@@ -11,6 +11,11 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/retail2?useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
     password: root
+  rabbitmq:
+    host: 192.168.1.13
+    port: 5672
+    username: cloud
+    password: cloud
   jpa:
     generate-ddl: true
     hibernate:
@@ -34,7 +39,7 @@ spring:
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://127.0.0.1:8761/eureka/
+      defaultZone: http://192.168.1.13:8761/eureka/
   instance:
     prefer-ip-address: true
 feign.hystrix.enabled: true

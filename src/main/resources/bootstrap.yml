@@ -5,5 +5,5 @@ spring:
     name: management
   cloud:
     config:
-      enabled: true
+      enabled: false
       uri: ${CONFIG_SERVER_URL}
