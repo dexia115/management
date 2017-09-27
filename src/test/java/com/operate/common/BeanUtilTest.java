@@ -11,9 +11,18 @@ public class BeanUtilTest {
 //		beanUtils.createBeanJavascript(User.class, "account");
 //		beanUtils.createBeanHtml(User.class, "account");
 		
-		String name = "parent.id";
-		String[] names = name.split("[.]");
-		System.out.println(names.length);
+//		String name = "parent.id";
+//		String[] names = name.split("[.]");
+//		System.out.println(names.length);
+		
+//		User u = new User();
+//		u.setUserName("lxd");
+//		User u2 = u;
+//		System.out.println(u2.equals(u));
+		Integer a = 99;
+		int b = 99 / 2;
+		
+		System.out.println(b);
 	}
 
 }
