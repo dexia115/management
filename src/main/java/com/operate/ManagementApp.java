@@ -30,5 +30,6 @@ public class ManagementApp extends SpringBootServletInitializer {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ManagementApp.class, args);
+//		new SpringApplicationBuilder(ManagementApp.class).web(true).run(args);
 	}
 }
