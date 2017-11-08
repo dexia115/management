@@ -2,20 +2,53 @@ package com.operate.tools;
 
 import java.util.Date;
 import org.springframework.util.Assert;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 public class PropertyFilter {
 
 	public static final String OR_SEPARATOR = "_OR_";
 
 	public enum MatchType {
-		AND, OR, NULL, NOTNULL, BETWEEN, IN, EQ, // ==EQuivalent with
-		LIKE, // like '%value%'
-		LIKESTART, // like 'value%'
-		LT, // < Less than
-		GT, // > Greater Than
-		LE, // <= Less than or Equivalent with
-		GE, // >= Greater than or Equivalent with
-		NOTIN, NE; // Not Equivalent with !=
+		AND(1,"and"), OR(2,"or"), NE(3,"不等于"), EQ(4,"等于"),LIKE(5,"包含"),
+		LT(6,"小于"), GT(7,"大于"), LE(8,"小于等于"), GE(9,"大于等于"), BETWEEN(10,"之间"),
+		IN(11,"in"),NOTIN(12,"not in"),NULL(13,"null"), NOTNULL(14,"not null"),LIKESTART(15,"前模糊") // like 'value%'		
+		;
+		
+		private Integer value;
+		
+		private String describle;
+		
+		private MatchType(Integer value,String describle){
+			this.value = value;
+			this.describle = describle;
+		}
+		
+		@JsonCreator
+	    public static MatchType forValue(Integer value) {
+			MatchType[] array = MatchType.values();
+	        for (MatchType obj : array) {
+	            if (obj.getValue().equals(value)) {
+	                return obj;
+	            }
+	        }
+	        return null;
+	    }
+
+		public Integer getValue() {
+			return value;
+		}
+
+		public void setValue(Integer value) {
+			this.value = value;
+		}
+
+		public String getDescrible() {
+			return describle;
+		}
+
+		public void setDescrible(String describle) {
+			this.describle = describle;
+		}
 	}
 
 	public enum Type {

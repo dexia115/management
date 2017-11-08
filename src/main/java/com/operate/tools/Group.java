@@ -1,16 +1,18 @@
 package com.operate.tools;
 
-import java.lang.reflect.Method;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import com.operate.tools.PropertyFilter.MatchType;
 import com.operate.tools.PropertyFilter.Type;
-import com.operate.tools.enums.EnumValue;
 
-public class Group {
+public class Group implements Serializable{
+	
+	
+	private static final long serialVersionUID = 1L;
+
 	private boolean isDate = false;
 
 	private MatchType relation = MatchType.AND;
@@ -119,37 +121,16 @@ public class Group {
 
 	public void setTempMatchType(String tempMatchType) {
 		this.tempMatchType = tempMatchType;
-		if (tempMatchType.equals("3")) {
-			matchType = MatchType.NE;
-		} else if (tempMatchType.equals("4")) {
-			matchType = MatchType.EQ;
-		} else if (tempMatchType.equals("5")) {
-			matchType = MatchType.LIKE;
-		} else if (tempMatchType.equals("6")) {
-			matchType = MatchType.LT;
-		} else if (tempMatchType.equals("7")) {
-			matchType = MatchType.GT;
-		} else if (tempMatchType.equals("8")) {
-			matchType = MatchType.LE;
-		} else if (tempMatchType.equals("9")) {
-			matchType = MatchType.GE;
-		} else if (tempMatchType.equals("10")) {
-			matchType = MatchType.BETWEEN;
-		} else if ("11".equals(tempMatchType)) {
-			matchType = MatchType.IN;
-		} else if ("12".equals(tempMatchType)) {
-			matchType = MatchType.NOTIN;
-		} else if ("13".equals(tempMatchType)) {
-			matchType = MatchType.NULL;
+		Integer value = Integer.parseInt(tempMatchType);
+		matchType = PropertyFilter.MatchType.forValue(value);
+		if ("13".equals(tempMatchType)) {
 			propertyValue1 = "";
 		} else if ("14".equals(tempMatchType)) {
-			matchType = MatchType.NOTNULL;
 			propertyValue1 = "";
 		}
 		if (getPropertyValue1() == null) {
 			matchType = MatchType.NULL;
 		}
-
 	}
 
 	public Type getType() {
@@ -176,7 +157,7 @@ public class Group {
 		} else if ("LONG".equals(tempType)) {
 			propertyValue1 = Long.valueOf(propertyValue1.toString());
 			if (propertyValue2 != null) {
-				propertyValue2 = Integer.valueOf(propertyValue1.toString());
+				propertyValue2 = Long.valueOf(propertyValue1.toString());
 			}
 		} else if ("FLOAT".equals(tempType)) {
 			propertyValue1 = Float.valueOf(propertyValue1.toString());
@@ -240,23 +221,6 @@ public class Group {
 				list.add(Long.parseLong(data));
 			}
 			propertyValue1 = list;
-		} else if("ENUM".equals(tempType)){
-			String values = propertyValue1.toString();
-			String[] arrays = values.split("-");
-			String className = arrays[0];
-			Integer index = Integer.parseInt(arrays[1]);
-			try {
-				Class<?> clazz = Class.forName("cn.gaiasys.retail.services.enums.trade."+className);
-				Method method = clazz.getMethod("values");
-				EnumValue[] es = (EnumValue[]) method.invoke(null);
-				for(EnumValue e : es){
-					if(e.getValue() == index){
-						propertyValue1 = e;
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
 		}
 	}
 
