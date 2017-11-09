@@ -6,6 +6,11 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
@@ -14,6 +19,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.operate.config.message.MessageSender;
+import com.operate.config.message.SinkSender;
 import com.operate.pojo.account.Authority;
 import com.operate.service.AccountService;
 import com.operate.tools.CommonUtil;
@@ -25,18 +32,31 @@ import com.operate.tools.PageVo;
 import com.operate.tools.PropertyFilter.MatchType;
 import com.operate.tools.ZtreeVo;
 import com.operate.vo.account.AuthorityVo;
+import com.operate.vo.account.UserVo;
 
 @RequestMapping("authority")
 @Controller
+@EnableBinding({ SinkSender.class })
 public class AuthorityController {
 	
 	@Autowired
 	private AccountService accountService;
+	@Autowired
+	private MessageSender messageSender;
+	
+	@Autowired
+	private SinkSender sinkSender;
 	
 	private static Logger logger = LoggerFactory.getLogger(AuthorityController.class);
 	
 	@GetMapping("/")
 	public String index() {
+		UserVo userVo = new UserVo();
+		userVo.setRealName("lxdd");
+		userVo.setUserName("12345");
+		
+		Message<UserVo> message = MessageBuilder.withPayload(userVo).build();
+		sinkSender.output().send(message);
 		
 		return "account/authority";
 	}

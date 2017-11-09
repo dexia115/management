@@ -12,10 +12,15 @@ spring:
     username: root
     password: root
   rabbitmq:
-    host: 192.168.1.13
+    host: localhost
     port: 5672
-    username: cloud
-    password: cloud
+    username: guest
+    password: guest
+  #sleuth:
+    #sampler:
+      #percentage: 0.1
+  #zipkin:
+    #base-url: http://localhost:9411
   jpa:
     generate-ddl: true
     hibernate:
@@ -44,4 +49,12 @@ eureka:
     prefer-ip-address: true
 feign.hystrix.enabled: true
 hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 60000
+spring.cloud.stream.bindings.input.group: groupA
+spring.cloud.stream.bindings.input.destination: hello
+spring.cloud.stream.bindings.input.content-type: application/json
+spring.cloud.stream.bindings.input.consumer.partitioned: false
+spring.cloud.stream.instanceCount: 2
+spring.cloud.stream.instanceIndex: 0
+
+spring.cloud.stream.bindings.output.destination: hello
       

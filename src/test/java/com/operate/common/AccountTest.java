@@ -14,6 +14,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import com.operate.ManagementApp;
 import com.operate.service.AccountService;
+import com.operate.vo.account.RoleVo;
 import com.operate.vo.account.UserVo;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -28,9 +29,23 @@ public class AccountTest extends AbstractTransactionalJUnit4SpringContextTests{
 	
 	@Test
 	@Rollback(false)
+	public void testRole(){
+		RoleVo roleVo = new RoleVo();
+		try {
+			roleVo.setDetails("系统管理员");
+			roleVo.setName("系统管理员");
+			roleVo.setCode("ADMIN");
+			accountService.saveRole(roleVo);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	@Rollback(false)
 	public void testUser(){
-		UserVo user = accountService.findUser(1L);
-		System.out.println(user.getUserName());
+//		UserVo user = accountService.findUser(1L);
+//		System.out.println(user.getUserName());
 		
 		UserVo userVo = new UserVo();
 		userVo.setUserName("wang123");

@@ -12,10 +12,11 @@ public class ReceiverElastic {
 	
 	@RabbitHandler
     public void process(String message) {
-		message = StringEscapeUtils.unescapeJson(message);  //反转义
-		Gson gson = new Gson();
-		MessageBody messageBody = gson.fromJson(message, MessageBody.class);
-        System.out.println("Receiver  : " + messageBody);
+//		message = StringEscapeUtils.unescapeJson(message);  //反转义
+//		Gson gson = new Gson();
+//		MessageBody messageBody = gson.fromJson(message, MessageBody.class);
+//        System.out.println("Receiver  : " + messageBody);
+		System.out.println("Receiver  : " + message);
     }
 
 }
