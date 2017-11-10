@@ -73,10 +73,14 @@ dependencies {
     compile("org.springframework.cloud:spring-cloud-starter-hystrix")
     compile("org.springframework.cloud:spring-cloud-starter-config")
     compile("org.springframework.boot:spring-boot-starter-amqp")
-
-    // Declare the dependency for your favourite test framework you want to use in your tests.
-    // TestNG is also supported by the Gradle Test task. Just change the
-    // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
-    // 'test.useTestNG()' to your build script.
+    compile("org.springframework.boot:spring-boot-starter-actuator")
+    compile("org.springframework.cloud:spring-cloud-starter-bus-amqp")
+    compile("org.springframework.cloud:spring-cloud-starter-stream-rabbit")
+    
+    //compile("org.springframework.cloud:spring-cloud-starter-sleuth")
+    //compile("org.springframework.cloud:spring-cloud-sleuth-zipkin")
+    //compile("org.springframework.cloud:spring-cloud-sleuth-stream")
+    
+    testCompile("org.springframework.boot:spring-boot-starter-test")
     testCompile 'junit:junit:4.12'
 }
