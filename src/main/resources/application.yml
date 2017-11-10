@@ -11,11 +11,11 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/retail2?useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
     password: root
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+  #rabbitmq:
+    #host: localhost
+    #port: 5672
+    #username: guest
+    #password: guest
   #sleuth:
     #sampler:
       #percentage: 0.1
@@ -50,11 +50,19 @@ eureka:
 feign.hystrix.enabled: true
 hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 60000
 spring.cloud.stream.bindings.input.group: groupA
-spring.cloud.stream.bindings.input.destination: hello
+spring.cloud.stream.bindings.input.destination: hello2
 spring.cloud.stream.bindings.input.content-type: application/json
 spring.cloud.stream.bindings.input.consumer.partitioned: false
 spring.cloud.stream.instanceCount: 2
 spring.cloud.stream.instanceIndex: 0
 
-spring.cloud.stream.bindings.output.destination: hello
+spring.cloud.stream.bindings.output.destination: hello2
+
+spring.cloud.stream.kafka.binder.brokers: 127.0.0.1
+spring.cloud.stream.kafka.binder.defaultBrokerPort: 9092
+spring.cloud.stream.kafka.binder.zk-nodes: 127.0.0.1
+spring.cloud.stream.kafka.binder.defaultZkPort: 2181
+#spring.cloud.stream.kafka.binder.minPartitionCount: 1
+#spring.cloud.stream.kafka.binder.autoCreateTopics: true
+#spring.cloud.stream.kafka.binder.autoAddPartitions: true
       
