@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-//import com.operate.config.message.SinkSender;
+import com.operate.config.message.SinkSender;
 import com.operate.pojo.account.Authority;
 import com.operate.service.AccountService;
 import com.operate.tools.CommonUtil;
@@ -33,14 +33,14 @@ import com.operate.vo.account.UserVo;
 
 @RequestMapping("authority")
 @Controller
-//@EnableBinding({ SinkSender.class })
+@EnableBinding({ SinkSender.class })
 public class AuthorityController {
 	
 	@Autowired
 	private AccountService accountService;
 	
-//	@Autowired
-//	private SinkSender sinkSender;
+	@Autowired
+	private SinkSender sinkSender;
 	
 	private static Logger logger = LoggerFactory.getLogger(AuthorityController.class);
 	
@@ -50,8 +50,8 @@ public class AuthorityController {
 		userVo.setRealName("lxdd");
 		userVo.setUserName("12345");
 		
-//		Message<UserVo> message = MessageBuilder.withPayload(userVo).build();
-//		sinkSender.output().send(message);
+		Message<UserVo> message = MessageBuilder.withPayload(userVo).build();
+		sinkSender.output().send(message);
 		
 		return "account/authority";
 	}
