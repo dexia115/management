@@ -8,7 +8,7 @@ spring:
     testWhileIdle: true
     validationQuery: select 1
     initialize: false
-    url: jdbc:mysql://127.0.0.1:3306/retail2?useUnicode=true&characterEncoding=UTF-8&useSSL=false
+    url: jdbc:mysql://127.0.0.1:3306/retail?useUnicode=true&characterEncoding=UTF-8&useSSL=false
     username: root
     password: root
   #rabbitmq:
@@ -25,7 +25,9 @@ spring:
     generate-ddl: true
     hibernate:
       ddl-auto: update
-      naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
+#      naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
+      naming: 
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: true
     properties:
       hibernate:
@@ -41,28 +43,39 @@ spring:
       charset: UTF-8
     multipart:
       max-file-size: 10240576
+  cloud: 
+    stream: 
+      bindings: 
+        input: 
+          group: groupA
+          destination: hello2
+          content-type: application/json
+          consumer: 
+            partitioned: false
+            maxAttempts: 1  #重试次数
+        output: 
+          group: groupA
+          destination: hello2
+          content-type: application/json
+      kafka: 
+        binder: 
+          brokers: 127.0.0.1:9092
+          zk-nodes: 127.0.0.1:2181
+          autoCreateTopics: false
+          autoAddPartitions: false
+          offsetUpdateTimeWindow: 1000
+          offsetUpdateCount: 0
+        bindings: 
+          input: 
+            consumer: 
+              autoCommitOffset: false
+      instanceCount: 1
+      instanceIndex: 0
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://192.168.1.13:8761/eureka/
+      defaultZone: http://127.0.0.1:8761/eureka/
   instance:
     prefer-ip-address: true
 feign.hystrix.enabled: true
 hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 60000
-spring.cloud.stream.bindings.input.group: groupA
-spring.cloud.stream.bindings.input.destination: hello2
-spring.cloud.stream.bindings.input.content-type: application/json
-spring.cloud.stream.bindings.input.consumer.partitioned: false
-spring.cloud.stream.instanceCount: 2
-spring.cloud.stream.instanceIndex: 0
-
-spring.cloud.stream.bindings.output.destination: hello2
-
-spring.cloud.stream.kafka.binder.brokers: 127.0.0.1
-spring.cloud.stream.kafka.binder.defaultBrokerPort: 9092
-spring.cloud.stream.kafka.binder.zk-nodes: 127.0.0.1
-spring.cloud.stream.kafka.binder.defaultZkPort: 2181
-#spring.cloud.stream.kafka.binder.minPartitionCount: 1
-#spring.cloud.stream.kafka.binder.autoCreateTopics: true
-#spring.cloud.stream.kafka.binder.autoAddPartitions: true
-      

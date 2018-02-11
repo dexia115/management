@@ -1,4 +1,4 @@
-package com.operate.config.message;
+/*package com.operate.config.message;
 
 import org.springframework.cloud.stream.annotation.Output;
 import org.springframework.cloud.stream.messaging.Sink;
@@ -10,3 +10,4 @@ public interface SinkSender {
 	MessageChannel output();
 
 }
+*/
